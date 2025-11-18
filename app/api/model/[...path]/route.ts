@@ -1,10 +1,11 @@
 import { auth } from '@/lib/auth';
-import { prisma } from '@/lib/db';
-import { enhance } from '@zenstackhq/runtime';
+import { authDb } from '@/lib/db';
+import { schema } from '@/zenstack/schema';
+import { RPCApiHandler } from '@zenstackhq/server/api';
 import { NextRequestHandler } from '@zenstackhq/server/next';
 import { headers } from 'next/headers';
 
-async function getPrisma() {
+async function getClient() {
     const reqHeaders = await headers();
     const sessionResult = await auth.api.getSession({
         headers: reqHeaders,
@@ -12,7 +13,7 @@ async function getPrisma() {
 
     if (!sessionResult) {
         // anonymous user, create enhanced client without user context
-        return enhance(prisma);
+        return authDb;
     }
 
     let organizationId: string | undefined = undefined;
@@ -37,10 +38,14 @@ async function getPrisma() {
         organizationId,
         organizationRole,
     };
-    return enhance(prisma, { user: userContext });
+    return authDb.$setAuth(userContext as any);
 }
 
-const handler = NextRequestHandler({ getPrisma, useAppDir: true });
+const handler = NextRequestHandler({
+    apiHandler: new RPCApiHandler({ schema }),
+    getClient,
+    useAppDir: true,
+});
 
 export {
     handler as DELETE,

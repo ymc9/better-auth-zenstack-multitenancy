@@ -14,31 +14,25 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    useCreateTodo,
-    useCreateTodoList,
-    useDeleteTodo,
-    useDeleteTodoList,
-    useFindManyTodo,
-    useFindManyTodoList,
-    useUpdateTodo,
-} from '@/hooks/model';
 import { useActiveOrganization } from '@/lib/auth-client';
-import { Todo, TodoList } from '@prisma/client';
+import { Todo, TodoList } from '@/zenstack/models';
+import { schema } from '@/zenstack/schema-lite';
 import { PlusIcon, TrashIcon } from '@radix-ui/react-icons';
+import { useClientQueries } from '@zenstackhq/tanstack-query/react';
 import { Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 export default function TodoListsCard() {
     const { data: activeOrg } = useActiveOrganization();
+    const client = useClientQueries(schema);
 
-    const { data: todoLists, refetch } = useFindManyTodoList({
+    const { data: todoLists, refetch } = client.todoList.useFindMany({
         orderBy: { createdAt: 'desc' },
     });
 
-    const { mutateAsync: del, isPending: isDeleting } = useDeleteTodoList();
-
+    const { mutateAsync: del, isPending: isDeleting } =
+        client.todoList.useDelete();
     // current editing TodoList
     const [currentOpenList, setCurrentOpenList] = useState<TodoList>();
 
@@ -100,7 +94,8 @@ export default function TodoListsCard() {
 function CreateTodoListDialog() {
     const [name, setName] = useState('');
     const [open, setOpen] = useState(false);
-    const { mutateAsync: create, isPending } = useCreateTodoList();
+    const client = useClientQueries(schema);
+    const { mutateAsync: create, isPending } = client.todoList.useCreate();
 
     useEffect(() => {
         if (open) {
@@ -161,8 +156,9 @@ function TodoListDialog({
     onClose: () => void;
 }) {
     const [title, setTitle] = useState('');
+    const client = useClientQueries(schema);
 
-    const { data: todos } = useFindManyTodo(
+    const { data: todos } = client.todo.useFindMany(
         {
             where: { listId: list?.id },
             orderBy: { createdAt: 'desc' },
@@ -170,7 +166,7 @@ function TodoListDialog({
         { enabled: !!list }
     );
 
-    const { mutateAsync: create, isPending } = useCreateTodo();
+    const { mutateAsync: create, isPending } = client.todo.useCreate();
 
     function onOpenChange(open: boolean) {
         if (!open) {
@@ -220,8 +216,10 @@ function TodoListDialog({
 }
 
 function TodoItem({ todo }: { todo: Todo }) {
-    const { mutateAsync: update, isPending: isUpdating } = useUpdateTodo();
-    const { mutateAsync: del, isPending: isDeleting } = useDeleteTodo();
+    const client = useClientQueries(schema);
+    const { mutateAsync: update, isPending: isUpdating } =
+        client.todo.useUpdate();
+    const { mutateAsync: del, isPending: isDeleting } = client.todo.useDelete();
     const [isDone, setIsDone] = useState(todo.done);
 
     async function onToggleDone() {

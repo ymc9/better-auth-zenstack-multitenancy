@@ -1,0 +1,164 @@
+datasource db {
+    provider = 'sqlite'
+    url = 'file:./dev.db'
+}
+
+plugin policy {
+    provider = "@zenstackhq/plugin-policy"
+}
+
+/// Shape of the `auth()` function
+type Auth {
+    userId           String  @id
+    organizationId   String?
+    organizationRole String?
+
+    @@auth
+}
+
+model TodoList {
+    id             String        @id @default(cuid())
+    createdAt      DateTime      @default(now())
+    updatedAt      DateTime      @updatedAt
+    name           String
+    owner          User          @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+    ownerId        String        @default(auth().userId)
+    organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    organizationId String?       @default(auth().organizationId)
+    todos          Todo[]
+
+    // deny anonymous users
+    @@deny('all', auth() == null)
+
+    // deny access to lists that don't belong to the user's active organization
+    @@deny('all', auth().organizationId != organizationId)
+
+    // users can create lists for themselves
+    @@allow('create', auth().userId == ownerId)
+
+    // full access to: list owner, org owner, and org admins
+    @@allow('all', auth().userId == ownerId || auth().organizationRole == 'owner' || auth().organizationRole == 'admin')
+
+    // if the list belongs to an org, it's readable to all members
+    @@allow('read', organizationId != null)
+}
+
+model Todo {
+    id        String   @id @default(cuid())
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    title     String
+    done      Boolean  @default(false)
+    listId    String
+    list      TodoList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+    // full access if the parent TodoList is readable
+    @@allow('all', check(list, 'read'))
+}
+
+model User {
+    id            String       @id
+    name          String
+    email         String       @unique
+    emailVerified Boolean      @default(false)
+    image         String?
+    createdAt     DateTime     @default(now())
+    updatedAt     DateTime     @default(now()) @updatedAt
+    role          String?
+    banned        Boolean?     @default(false)
+    banReason     String?
+    banExpires    DateTime?
+    sessions      Session[]
+    accounts      Account[]
+    members       Member[]
+    invitations   Invitation[]
+    todoLists     TodoList[]
+
+    @@map('user')
+}
+
+model Session {
+    id                   String   @id
+    expiresAt            DateTime
+    token                String   @unique
+    createdAt            DateTime @default(now())
+    updatedAt            DateTime @updatedAt
+    ipAddress            String?
+    userAgent            String?
+    userId               String
+    user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+    activeOrganizationId String?
+    impersonatedBy       String?
+
+    @@map('session')
+}
+
+model Account {
+    id                    String    @id
+    accountId             String
+    providerId            String
+    userId                String
+    user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    accessToken           String?
+    refreshToken          String?
+    idToken               String?
+    accessTokenExpiresAt  DateTime?
+    refreshTokenExpiresAt DateTime?
+    scope                 String?
+    password              String?
+    createdAt             DateTime  @default(now())
+    updatedAt             DateTime  @updatedAt
+
+    @@map('account')
+}
+
+model Verification {
+    id         String   @id
+    identifier String
+    value      String
+    expiresAt  DateTime
+    createdAt  DateTime @default(now())
+    updatedAt  DateTime @default(now()) @updatedAt
+
+    @@map('verification')
+}
+
+model Organization {
+    id          String       @id
+    name        String
+    slug        String       @unique
+    logo        String?
+    createdAt   DateTime
+    metadata    String?
+    members     Member[]
+    invitations Invitation[]
+    todoLists   TodoList[]
+
+    @@map('organization')
+}
+
+model Member {
+    id             String       @id
+    organizationId String
+    organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    userId         String
+    user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    role           String
+    createdAt      DateTime
+
+    @@map('member')
+}
+
+model Invitation {
+    id             String       @id
+    organizationId String
+    organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+    email          String
+    role           String?
+    status         String
+    expiresAt      DateTime
+    inviterId      String
+    user           User         @relation(fields: [inviterId], references: [id], onDelete: Cascade)
+
+    @@map('invitation')
+}

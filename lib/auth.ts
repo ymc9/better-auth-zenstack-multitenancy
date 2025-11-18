@@ -1,8 +1,8 @@
+import { zenstackAdapter } from '@zenstackhq/better-auth';
 import { betterAuth } from 'better-auth';
-import { prismaAdapter } from 'better-auth/adapters/prisma';
 import { nextCookies } from 'better-auth/next-js';
 import { admin, bearer, organization } from 'better-auth/plugins';
-import { prisma } from './db';
+import { db } from './db';
 import { reactInvitationEmail } from './email/invitation';
 import { resend } from './email/resend';
 import { reactResetPasswordEmail } from './email/rest-password';
@@ -12,7 +12,7 @@ const to = process.env.TEST_EMAIL || '';
 
 export const auth = betterAuth({
     appName: 'Better Auth Demo',
-    database: prismaAdapter(prisma, {
+    database: zenstackAdapter(db, {
         provider: 'sqlite',
     }),
     emailVerification: {
