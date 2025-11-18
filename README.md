@@ -14,8 +14,8 @@ The project is based on better-auth's [Next.js demo project](https://github.com/
 3. Prepare the database
 
     ```bash
-    npx zen generate
-    npx zen db push
+    npm run db:generate
+    npm run db:push
     ```
 
 4. Start dev server

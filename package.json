@@ -3,7 +3,8 @@
     "version": "0.1.0",
     "private": true,
     "scripts": {
-        "generate": "zen generate --lite",
+        "db:generate": "zen generate --lite",
+        "db:push": "zen db push",
         "dev": "next dev",
         "dev:secure": "next dev --experimental-https",
         "typecheck": "tsc --noEmit",
