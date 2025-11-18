@@ -1,4 +1,4 @@
-This is the companion project of the blog post [When Embedded AuthN Meets Embedded AuthZ - Building Multi-Tenant Apps With Better-Auth and ZenStack](https://zenstack.dev/blog/better-auth).
+This is a project demonstrating using better-auth with ZenStack v3 in a Next.js multi-tenant application.
 
 The project is based on better-auth's [Next.js demo project](https://github.com/better-auth/better-auth/tree/main/demo/nextjs).
 
@@ -14,8 +14,8 @@ The project is based on better-auth's [Next.js demo project](https://github.com/
 3. Prepare the database
 
     ```bash
-    npx zenstack generate
-    npx prisma db push
+    npx zen generate
+    npx zen db push
     ```
 
 4. Start dev server
