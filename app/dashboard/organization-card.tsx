@@ -59,7 +59,7 @@ export function OrganizationCard(props: {
     const { data } = useSession();
     const session = data || props.session;
 
-    const currentMember = optimisticOrg?.members.find(
+    const currentMember = optimisticOrg?.members?.find(
         (member) => member.userId === session?.user.id
     );
 
@@ -108,6 +108,7 @@ export function OrganizationCard(props: {
                                             await organization.setActive({
                                                 organizationId: org.id,
                                             });
+                                        console.log('Set active org', data);
                                         setOptimisticOrg(data);
                                     }}
                                 >
@@ -133,7 +134,7 @@ export function OrganizationCard(props: {
                     <div>
                         <p>{optimisticOrg?.name || 'Personal'}</p>
                         <p className="text-xs text-muted-foreground">
-                            {optimisticOrg?.members.length || 1} members
+                            {optimisticOrg?.members?.length || 1} members
                         </p>
                     </div>
                 </div>
@@ -145,7 +146,7 @@ export function OrganizationCard(props: {
                             Members
                         </p>
                         <div className="flex flex-col gap-2">
-                            {optimisticOrg?.members.map((member) => (
+                            {optimisticOrg?.members?.map((member) => (
                                 <div
                                     key={member.id}
                                     className="flex justify-between items-center"
@@ -221,7 +222,7 @@ export function OrganizationCard(props: {
                         <div className="flex flex-col gap-2">
                             <AnimatePresence>
                                 {optimisticOrg?.invitations
-                                    .filter(
+                                    ?.filter(
                                         (invitation) =>
                                             invitation.status === 'pending'
                                     )
@@ -284,7 +285,7 @@ export function OrganizationCard(props: {
                                                                             {
                                                                                 ...optimisticOrg,
                                                                                 invitations:
-                                                                                    optimisticOrg?.invitations.filter(
+                                                                                    optimisticOrg?.invitations?.filter(
                                                                                         (
                                                                                             inv
                                                                                         ) =>
@@ -336,7 +337,7 @@ export function OrganizationCard(props: {
                                         </motion.div>
                                     ))}
                             </AnimatePresence>
-                            {optimisticOrg?.invitations.length === 0 && (
+                            {optimisticOrg?.invitations?.length === 0 && (
                                 <motion.p
                                     className="text-sm text-muted-foreground"
                                     initial={{ opacity: 0 }}
